@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR, OneCycleLR
 import torch.optim as optim
-import utils
 
 
 def l1_regularization(model, loss, lambda_l1):
@@ -95,16 +94,13 @@ def test(model, device, test_loader, test_acc, test_losses):
     test_acc.append(100.0 * correct / len(test_loader.dataset))
 
 
-def run_model(train_loader, test_loader, model, epochs):
+def run_model(train_loader, test_loader, model, epochs, device):
     train_losses = []
     test_losses = []
     train_acc = []
     test_acc = []
 
     EPOCHS = epochs
-
-    device = utils.get_device_info()
-
     model = model.to(device)
     optimizer = optim.SGD(model.parameters(), lr=0.05, momentum=0.9)
     scheduler = OneCycleLR(
