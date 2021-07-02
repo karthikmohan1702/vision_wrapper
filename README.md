@@ -11,3 +11,8 @@ Houses custom & different models required for computer vision
 - Misclassified images visualization
 - sample dataset visualization
 - Summary of the model
+
+
+### References
+
+- Resnet model - https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
