@@ -225,8 +225,8 @@ class GradCam:
         heatmap = np.float32(heatmap) / 255
         img = self.img_tensor[0] / 2 + 0.5
         img = np.transpose(img.numpy(), (1, 2, 0))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         cam = heatmap + img
+        cam = cv2.cvtColor(cam, cv2.COLOR_BGR2RGB)
         cam = cam / np.max(cam)
         fig = plt.figure(figsize=(20, 10))
 
@@ -242,6 +242,8 @@ class GradCam:
 
 
 def plot_grad_cam(test_loader, model, classes, samples: int):
+    device = get_device_info()
+    model = model.to(device)
     img_tensor_batch, labels = next(iter(test_loader))
     for idx in range(samples):
         gm = GradCam(
@@ -253,7 +255,6 @@ def plot_grad_cam(test_loader, model, classes, samples: int):
             target_layer_names=["1"],
         )
         gm.plot()
-
 
 # =============== Visualization ==============================
 
@@ -318,8 +319,8 @@ def misclassified_images(model, classes, test_transform, trainset, testset):
                 wrong_imgs.append(img[idx].squeeze().permute(1, 2, 0))
                 wrong_lbl.append(classes[pred[idx].item()])
                 corr_lbl.append(classes[target[idx].item()])
-                ax.imshow(img[idx].squeeze().permute(1, 2, 0))
-                # ax.imshow(img[idx].squeeze().permute(1, 2, 0).clamp(0, 1))
+                # ax.imshow(img[idx].squeeze().permute(1, 2, 0))
+                ax.imshow(img[idx].squeeze().permute(1, 2, 0).clamp(0, 1))
                 ax.set_title(
                     f"Target = {classes[target[idx].item()]} \n Predicted = {classes[pred[idx].item()]}"
                 )
