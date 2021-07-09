@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR, OneCycleLR
 import torch.optim as optim
+from torch_lr_finder import LRFinder
 
 
 def l1_regularization(model, loss, lambda_l1):
@@ -93,21 +94,64 @@ def test(model, device, test_loader, test_acc, test_losses):
 
     test_acc.append(100.0 * correct / len(test_loader.dataset))
 
+def lr_finder(param_dict):
+    """
+    Learning rate finder takes the params in and increases the learning rate
+    in between the boundaries mentioned in the params & provides info the range of 
+    learning rates that can be used.
 
-def run_model(train_loader, test_loader, model, epochs, device):
+    Parameters
+    ==========
+    param_dict: dict - Has all the params required for LRFinder
+    
+    Returns
+    =======
+    lr_max: int - maximum lr value
+    lr_finder: dict - has history of loss & lr
+    """
+    model = param_dict["model"]
+    train_loader = param_dict["train_loader"]
+    test_loader = param_dict["test_loader"]
+    criterion = param_dict["criterion"]
+    optimizer = param_dict["optimizer"]
+    end_lr = param_dict["end_lr"]
+    num_iter = param_dict["num_iter"]
+    step_mode = param_dict["step_mode"]
+    device = param_dict["device"]
+
+    lr_finder = LRFinder(model, optimizer, criterion, device)
+    lr_finder.range_test(train_loader, test_loader, end_lr, num_iter, step_mode)
+    lr_max = lr_finder.history['lr']
+    lr_max = lr_max[lr_finder.history['loss'].index(lr_finder.best_loss)]
+    return lr_max, lr_finder
+
+
+def run_model(train_loader, test_loader, model, epochs, device,  max_at_epoch, param_dict):
+    """
+    Training the model by defined optimizer, scheduler & epochs and 
+    using the lr_finder, will arrive at the lr_max. 
+    """
     train_losses = []
     test_losses = []
     train_acc = []
     test_acc = []
 
+    # Calling LR Finder & getting the lr_max
+    lr_max, _ = lr_finder(param_dict)
+
+    # Getting lr_min from the param_dict
+    lr_min = param_dict["lr_min"]
+
     EPOCHS = epochs
     model = model.to(device)
-    optimizer = optim.SGD(model.parameters(), lr=0.05, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=lr_min, momentum=0.9)
+    
+    # Schedule the scheduler
     scheduler = OneCycleLR(
-        optimizer, max_lr=0.05, epochs=EPOCHS, steps_per_epoch=len(train_loader)
+        optimizer, max_lr=lr_max, epochs=EPOCHS, steps_per_epoch=len(train_loader), pct_start=max_at_epoch/EPOCHS
     )
 
-    model.eval()
+    # Running the epochs
     for epoch in range(EPOCHS):
         print("EPOCH:", epoch)
         train(model, device, train_loader, optimizer, epoch, train_losses, train_acc)
