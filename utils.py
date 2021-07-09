@@ -55,26 +55,41 @@ def train_test_loader(trainset, testset, batch_size):
 
 # =============== Augmentations ==============================
 def albumentaion_transform(mean: list, std: list):
+    """
+    Performing different image augmentations using albumentations
+    libraray.
+
+    Parameters:
+    ===========
+    mean: list - list of mean values
+    std: list - list of std values
+
+    Returns:
+    ========
+    train_transform: list of transformations for train set
+    test_transform: list of transformations for test set
+    """
     train_transform = A.Compose(
         [
             A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),
             A.RandomCrop(width=32, height=32, p=1),
             A.HorizontalFlip(p=0.2),
-            A.augmentations.geometric.transforms.ShiftScaleRotate(
-                shift_limit=0.0625,
-                scale_limit=0.1,
-                rotate_limit=10,
-            ),
-            A.CoarseDropout(
-                max_holes=1,
-                max_height=16,
-                max_width=16,
-                min_holes=1,
-                min_height=16,
-                min_width=1,
-                fill_value=mean,
-                mask_fill_value=None,
-            ),
+            A.Cutout(num_holes=16, max_h_size=8, max_w_size=8, fill_value=mean, p=0.4),
+            # A.augmentations.geometric.transforms.ShiftScaleRotate(
+            #     shift_limit=0.0625,
+            #     scale_limit=0.1,
+            #     rotate_limit=10,
+            # ),
+            # A.CoarseDropout(
+            #     max_holes=1,
+            #     max_height=16,
+            #     max_width=16,
+            #     min_holes=1,
+            #     min_height=16,
+            #     min_width=1,
+            #     fill_value=mean,
+            #     mask_fill_value=None,
+            # ),
             A.Normalize(mean, std),
             ToTensorV2(),
         ]
@@ -256,6 +271,7 @@ def plot_grad_cam(test_loader, model, classes, samples: int):
         )
         gm.plot()
 
+
 # =============== Visualization ==============================
 
 
@@ -287,9 +303,7 @@ def plot_acc_loss(train_losses, train_acc, test_losses, test_acc):
 def misclassified_images(model, classes, test_transform, trainset, testset):
     testset = get_cifar10_dataset(train=False, transform=test_transform)
     batch_size = len(testset)
-    train_loader, test_loader = train_test_loader(
-        trainset, testset, batch_size
-    )
+    train_loader, test_loader = train_test_loader(trainset, testset, batch_size)
     mean, std = get_mean_std(train_loader)
     device = get_device_info()
     model = model.to(device)
@@ -326,4 +340,3 @@ def misclassified_images(model, classes, test_transform, trainset, testset):
                 )
 
             plt.show()
-
