@@ -73,8 +73,8 @@ def albumentaion_transform(mean: list, std: list):
         [
             A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),
             A.RandomCrop(width=32, height=32, p=1),
-            A.HorizontalFlip(p=0.2),
-            A.Cutout(num_holes=16, max_h_size=8, max_w_size=8, fill_value=mean, p=0.4),
+            A.HorizontalFlip(p=0.8),
+            A.Cutout(num_holes=8, max_h_size=8, max_w_size=8, fill_value=mean, p=0.5),
             # A.augmentations.geometric.transforms.ShiftScaleRotate(
             #     shift_limit=0.0625,
             #     scale_limit=0.1,
